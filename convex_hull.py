@@ -9,6 +9,7 @@ else:
 
 
 import time
+import math
 
 # Some global color constants that might be useful
 RED = (255,0,0)
@@ -54,29 +55,116 @@ class ConvexHullSolver(QObject):
 		
 	def showText(self,text):
 		self.view.displayStatusText(text)
-	
 
 # This is the method that gets called by the GUI and actually executes
 # the finding of the hull
-	def compute_hull( self, points, pause, view):
+	def compute_hull(self, points, pause, view):
 		self.pause = pause
 		self.view = view
 		assert( type(points) == list and type(points[0]) == QPointF )
 
 		t1 = time.time()
+		sortPoints = sorted(points, key=lambda point: point.x())
 		# TODO: SORT THE POINTS BY INCREASING X-VALUE
 		t2 = time.time()
 
 		t3 = time.time()
 		# this is a dummy polygon of the first 3 unsorted points
-		polygon = [QLineF(points[i],points[(i+1)%3]) for i in range(3)]
+		polygon = self._divide_conquer(sortPoints)
 		# TODO: REPLACE THE LINE ABOVE WITH A CALL TO YOUR DIVIDE-AND-CONQUER CONVEX HULL SOLVER
 		t4 = time.time()
 
 		# when passing lines to the display, pass a list of QLineF objects.  Each QLineF
 		# object can be created with two QPointF objects corresponding to the endpoints
-		self.showHull(polygon,RED)
+		fullHull = [QLineF(polygon[i], polygon[(i+1)%len(polygon)]) for i in range(len(polygon))]
+		self.showHull(fullHull,RED)
 		self.showText('Time Elapsed (Convex Hull): {:3.3f} sec'.format(t4-t3))
+	
+	def _divide_conquer(self, points):
+		numPoints = len(points)
 
+		if numPoints == 1:
+			return points
+		leftHull = self._divide_conquer(points[:numPoints//2])
+		rightHull = self._divide_conquer(points[numPoints//2:])
 
+		if len(leftHull) == 1 and len(rightHull) == 1:
+			leftHull.extend(rightHull)
+			return leftHull
+		
+		leftStart = leftHull.index(sorted(leftHull, key=lambda leftPoint: leftPoint.x())[-1])
+		leftTop = leftHull.index(sorted(leftHull, key=lambda leftPoint: leftPoint.y())[0])
+		rightStart = rightHull.index(sorted(rightHull, key=lambda rightPoint: rightPoint.x())[0])
+		rightTop = rightHull.index(sorted(rightHull, key=lambda rightPoint: rightPoint.y())[-1])
 
+		i = leftStart
+		j = rightStart
+
+		done = 0
+		left = True
+		right = True
+		slope = (rightHull[j].y() - leftHull[i].y())/(rightHull[j].x() - leftHull[i].x())
+		while left or right:
+			left = False
+			right = False
+			while True:
+				newSlope = (rightHull[j].y() - leftHull[(i-1)%len(leftHull)].y())/(rightHull[j].x() - leftHull[(i-1)%len(leftHull)].x())
+				if newSlope < slope:
+					left = True
+					slope = newSlope
+					i = (i-1)%len(leftHull)
+				else:
+					break
+			while True:
+				newSlope = (rightHull[(j+1)%len(rightHull)].y() - leftHull[i].y())/(rightHull[(j+1)%len(rightHull)].x() - leftHull[i].x())
+				if abs(newSlope) < abs(slope):
+					right = True
+					slope = newSlope
+					j = (j+1)%len(rightHull)
+				else:
+					break	
+		
+		upper = (i,j)
+		i = leftStart
+		j = rightStart
+		left = True
+		right = True
+		slope = (rightHull[j].y() - leftHull[i].y())/(rightHull[j].x() - leftHull[i].x())
+		while left or right:
+			left = False
+			right = False
+			while True:
+				newSlope = (rightHull[j].y() - leftHull[(i+1)%len(leftHull)].y())/(rightHull[j].x() - leftHull[(i+1)%len(leftHull)].x())
+				if newSlope > slope:
+					left = True
+					slope = newSlope
+					i = (i+1)%len(leftHull)
+				else:
+					break
+			while True:
+				newSlope = (rightHull[(j-1)%len(rightHull)].y() - leftHull[i].y())/(rightHull[(j-1)%len(rightHull)].x() - leftHull[i].x())
+				if abs(newSlope) > abs(slope):
+					right = True
+					slope = newSlope
+					j = (j-1)%len(rightHull)
+				else:
+					break
+
+		lower = (i,j)
+
+		final = []
+		k = lower[0]
+		final.append(leftHull[k])
+
+		while k != upper[0]:
+			k = (k+1)%len(leftHull)
+			final.append(leftHull[k])
+		
+		k = upper[1]
+		final.append(rightHull[k])
+
+		while k != lower[1]:
+			k = (k+1)%len(rightHull)
+			final.append(rightHull[k])
+		
+		return final
