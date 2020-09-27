@@ -117,7 +117,7 @@ class ConvexHullSolver(QObject):
 					break
 			while True:
 				newSlope = (rightHull[(j+1)%len(rightHull)].y() - leftHull[i].y())/(rightHull[(j+1)%len(rightHull)].x() - leftHull[i].x())
-				if abs(newSlope) < abs(slope):
+				if newSlope > slope:
 					right = True
 					slope = newSlope
 					j = (j+1)%len(rightHull)
@@ -143,7 +143,7 @@ class ConvexHullSolver(QObject):
 					break
 			while True:
 				newSlope = (rightHull[(j-1)%len(rightHull)].y() - leftHull[i].y())/(rightHull[(j-1)%len(rightHull)].x() - leftHull[i].x())
-				if abs(newSlope) > abs(slope):
+				if newSlope < slope:
 					right = True
 					slope = newSlope
 					j = (j-1)%len(rightHull)
