@@ -71,7 +71,7 @@ class ConvexHullSolver(QObject):
 
         t3 = time.time()
         # this is a dummy polygon of the first 3 unsorted points
-        polygon = self._divide_conquer(sortPoints)
+        polygon = self._divide_conquer(sortPoints, pause, view)
         # TODO: REPLACE THE LINE ABOVE WITH A CALL TO YOUR DIVIDE-AND-CONQUER CONVEX HULL SOLVER
         t4 = time.time()
 
@@ -82,13 +82,13 @@ class ConvexHullSolver(QObject):
         self.showHull(fullHull, RED)
         self.showText('Time Elapsed (Convex Hull): {:3.3f} sec'.format(t4-t3))
 
-    def _divide_conquer(self, points):
+    def _divide_conquer(self, points, pause, view):
         numPoints = len(points)
 
         if numPoints == 1:
             return points
-        leftHull = self._divide_conquer(points[:numPoints//2])
-        rightHull = self._divide_conquer(points[numPoints//2:])
+        leftHull = self._divide_conquer(points[:numPoints//2], pause, view)
+        rightHull = self._divide_conquer(points[numPoints//2:], pause, view)
 
         # If there is only one point each just combine them
         if len(leftHull) == 1 and len(rightHull) == 1:
@@ -161,6 +161,20 @@ class ConvexHullSolver(QObject):
                     break
 
         lower = (i, j)
+
+        if pause:
+            leftPrint = [QLineF(leftHull[i], leftHull[(i+1) % len(leftHull)])
+                         for i in range(len(leftHull))]
+            rightPrint = [QLineF(rightHull[i], rightHull[(
+                i+1) % len(rightHull)]) for i in range(len(rightHull))]
+            upperPrint = QLineF(leftHull[upper[0]], rightHull[upper[1]])
+            lowerPrint = QLineF(leftHull[lower[0]], rightHull[lower[1]])
+            self.showHull(leftPrint, RED)
+            self.showHull(rightPrint, RED)
+            self.showTangent([upperPrint, lowerPrint], BLUE)
+            self.eraseHull(leftPrint)
+            self.eraseHull(rightPrint)
+            self.eraseTangent([upperPrint, lowerPrint])
 
         # Combine the two hulls with upper and lower tangent
         final = []
