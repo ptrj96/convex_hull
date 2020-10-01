@@ -162,19 +162,9 @@ class ConvexHullSolver(QObject):
 
         lower = (i, j)
 
+        # Show recursion if selected
         if pause:
-            leftPrint = [QLineF(leftHull[i], leftHull[(i+1) % len(leftHull)])
-                         for i in range(len(leftHull))]
-            rightPrint = [QLineF(rightHull[i], rightHull[(
-                i+1) % len(rightHull)]) for i in range(len(rightHull))]
-            upperPrint = QLineF(leftHull[upper[0]], rightHull[upper[1]])
-            lowerPrint = QLineF(leftHull[lower[0]], rightHull[lower[1]])
-            self.showHull(leftPrint, RED)
-            self.showHull(rightPrint, RED)
-            self.showTangent([upperPrint, lowerPrint], BLUE)
-            self.eraseHull(leftPrint)
-            self.eraseHull(rightPrint)
-            self.eraseTangent([upperPrint, lowerPrint])
+            self._show_recursion(leftHull, rightHull, upper, lower)
 
         # Combine the two hulls with upper and lower tangent
         final = []
@@ -193,3 +183,17 @@ class ConvexHullSolver(QObject):
             final.append(rightHull[k])
 
         return final
+
+    def _show_recursion(self, leftHull, rightHull, upper, lower):
+        leftPrint = [QLineF(leftHull[i], leftHull[(i+1) % len(leftHull)])
+                     for i in range(len(leftHull))]
+        rightPrint = [QLineF(rightHull[i], rightHull[(
+            i+1) % len(rightHull)]) for i in range(len(rightHull))]
+        upperPrint = QLineF(leftHull[upper[0]], rightHull[upper[1]])
+        lowerPrint = QLineF(leftHull[lower[0]], rightHull[lower[1]])
+        self.showHull(leftPrint, RED)
+        self.showHull(rightPrint, RED)
+        self.showTangent([upperPrint, lowerPrint], BLUE)
+        self.eraseHull(leftPrint)
+        self.eraseHull(rightPrint)
+        self.eraseTangent([upperPrint, lowerPrint])
