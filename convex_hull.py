@@ -96,12 +96,14 @@ class ConvexHullSolver(QObject):
             return leftHull
 
         # Find the right most point of the left hull and the left most point of the right hull
+        # This is O(n)
         leftStart = leftHull.index(
-            sorted(leftHull, key=lambda leftPoint: leftPoint.x())[-1])
+            max(leftHull, key=lambda leftPoint: leftPoint.x()))
         rightStart = rightHull.index(
-            sorted(rightHull, key=lambda rightPoint: rightPoint.x())[0])
+            min(rightHull, key=lambda rightPoint: rightPoint.x()))
 
         # Find the upper tangent
+        # This is at worst O(n)
         i = leftStart
         j = rightStart
         left = True
@@ -132,6 +134,7 @@ class ConvexHullSolver(QObject):
         upper = (i, j)
 
         # Find the lower tangent
+        # This is at worst O(n)
         i = leftStart
         j = rightStart
         left = True
@@ -167,6 +170,7 @@ class ConvexHullSolver(QObject):
             self._show_recursion(leftHull, rightHull, upper, lower)
 
         # Combine the two hulls with upper and lower tangent
+        # This is at worst O(n)
         final = []
         k = lower[0]
         final.append(leftHull[k])
